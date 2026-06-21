@@ -1,0 +1,13 @@
+# Both source libraries pin `channel = "stable"`, and both use APIs
+# (e.g. const `Duration::from_mins`) that only stabilised in a recent
+# stable. Pin a concrete floor here so the combined build is
+# reproducible regardless of whatever the host's `stable` happens to be
+# (some machines still resolve `stable` to an older release). Bump to
+# match the published toolchain when the node repos do.
+[toolchain]
+channel = "1.94"
+targets = [
+    "aarch64-apple-ios",
+    "aarch64-apple-ios-sim",
+    "x86_64-apple-ios",
+]

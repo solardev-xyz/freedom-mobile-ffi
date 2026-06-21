@@ -1,0 +1,34 @@
+# Aggregator staticlib: links `ant-ffi` (Swarm) + `freedom-ipfs-mobile`
+# (IPFS) into ONE Rust staticlib. Two separately-built Rust staticlibs
+# in one iOS app collide on the Rust runtime / allocator / panic
+# machinery; compiling both into a single staticlib gives the app one
+# copy of std + one libp2p/tokio, with both C ABIs exported. See the
+# `ant-ffi` README "Combining with other Rust libraries in the same app".
+#
+# Local-dev: path deps to sibling checkouts. Published builds pin the
+# two libraries to git tags instead.
+[package]
+name = "freedom-mobile-ffi"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Empty workspace table so cargo treats this as a standalone package and
+# does NOT try to absorb it into (or walk up to) either node repo's
+# workspace.
+[workspace]
+
+[lib]
+crate-type = ["staticlib", "rlib"]
+name = "freedom_mobile_ffi"
+
+[dependencies]
+# `chain` off for now (download/browse path); flip on when light-mode
+# on-chain postage parity is wired.
+ant-ffi = { path = "../ant/crates/ant-ffi" }
+freedom-ipfs-mobile = { path = "../freedom-ipfs/crates/freedom-ipfs-mobile" }
+
+[profile.release]
+# Match the per-library iOS release profiles; keep panic=unwind (Rust
+# staticlib default on Apple) consistent across the merged graph.
+opt-level = 3
