@@ -23,9 +23,10 @@ crate-type = ["staticlib", "rlib"]
 name = "freedom_mobile_ffi"
 
 [dependencies]
-# `chain` off for now (download/browse path); flip on when light-mode
-# on-chain postage parity is wired.
-ant-ffi = { path = "../ant/crates/ant-ffi" }
+# `chain` on: enables the on-chain `/wallet` `/stamps` `/chequebook`
+# gateway surfaces (light-mode parity with desktop antd). Pulls
+# ant-chain → reqwest/rustls into the slice.
+ant-ffi = { path = "../ant/crates/ant-ffi", features = ["chain"] }
 freedom-ipfs-mobile = { path = "../freedom-ipfs/crates/freedom-ipfs-mobile" }
 
 [profile.release]
