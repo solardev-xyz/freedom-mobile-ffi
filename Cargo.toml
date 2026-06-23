@@ -26,8 +26,15 @@ name = "freedom_mobile_ffi"
 # `chain` on: enables the on-chain `/wallet` `/stamps` `/chequebook`
 # gateway surfaces (light-mode parity with desktop antd). Pulls
 # ant-chain → reqwest/rustls into the slice.
-ant-ffi = { path = "../ant/crates/ant-ffi", features = ["chain"] }
-freedom-ipfs-mobile = { path = "../freedom-ipfs/crates/freedom-ipfs-mobile" }
+ant-ffi = { git = "ssh://git@github.com/solardev-xyz/ant.git", tag = "v0.5.30", features = ["chain"] }
+freedom-ipfs-mobile = { git = "ssh://git@github.com/solardev-xyz/freedom-ipfs.git", tag = "v0.4.2" }
+
+# Local-dev override: point at sibling checkouts to test un-tagged work
+# before cutting tags (uncomment these, comment the git deps above).
+# Keep both in sync with the build script's header resolution — it reads
+# `ant.h` / `freedom_ipfs.h` from whichever source cargo resolved.
+# ant-ffi = { path = "../ant/crates/ant-ffi", features = ["chain"] }
+# freedom-ipfs-mobile = { path = "../freedom-ipfs/crates/freedom-ipfs-mobile" }
 
 [profile.release]
 # Match the per-library iOS release profiles; keep panic=unwind (Rust

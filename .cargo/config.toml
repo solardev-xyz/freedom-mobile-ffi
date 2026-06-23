@@ -1,0 +1,5 @@
+# The two libraries are pinned as SSH git deps (see Cargo.toml). Cargo's
+# built-in libgit2 transport can't drive ssh-agent on macOS, so fetch via
+# the `git` CLI, which already uses the developer's working SSH config.
+[net]
+git-fetch-with-cli = true
