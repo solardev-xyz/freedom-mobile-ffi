@@ -27,7 +27,7 @@ name = "freedom_mobile_ffi"
 # gateway surfaces (light-mode parity with desktop antd). Pulls
 # ant-chain → reqwest/rustls into the slice.
 ant-ffi = { git = "ssh://git@github.com/solardev-xyz/ant.git", tag = "v0.5.33", features = ["chain"] }
-freedom-ipfs-mobile = { git = "ssh://git@github.com/solardev-xyz/freedom-ipfs.git", tag = "v0.4.2" }
+freedom-ipfs-mobile = { git = "ssh://git@github.com/solardev-xyz/freedom-ipfs.git", tag = "v0.4.3" }
 
 # Local-dev override: point at sibling checkouts to test un-tagged work
 # before cutting tags (uncomment these, comment the git deps above).
