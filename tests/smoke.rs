@@ -83,12 +83,17 @@ fn both_abis_live_and_gateway_serves_in_process() {
     // Non-default port so a real bee/antd on 1633 doesn't interfere.
     let authority = "127.0.0.1:16633";
     let addr_c = CString::new(authority).unwrap();
+    // Full-node mode, no gnosis RPC (the nullable 4th arg — light-mode
+    // chain reads aren't exercised by this host smoke).
     let mut gerr: *mut c_char = ptr::null_mut();
-    let started = unsafe { ant_start_gateway(handle, addr_c.as_ptr(), false, &mut gerr) };
+    let started =
+        unsafe { ant_start_gateway(handle, addr_c.as_ptr(), false, ptr::null(), &mut gerr) };
     assert!(started, "ant_start_gateway failed: {}", take_err(gerr));
 
     // Idempotent: a second start while live is a no-op success.
-    let again = unsafe { ant_start_gateway(handle, addr_c.as_ptr(), false, ptr::null_mut()) };
+    let again = unsafe {
+        ant_start_gateway(handle, addr_c.as_ptr(), false, ptr::null(), ptr::null_mut())
+    };
     assert!(again, "second ant_start_gateway should be a no-op success");
 
     // The gateway should serve bee's /health (200 + {status,version,apiVersion}).
