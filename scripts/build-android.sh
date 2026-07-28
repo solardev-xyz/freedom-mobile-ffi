@@ -94,12 +94,18 @@ fail_with_diagnostics() {
   exit 1
 }
 
+# Capture tool output before grepping: under `set -o pipefail`,
+# `nm | grep -q` is a latent race — grep -q exits on first match,
+# nm dies of SIGPIPE mid-write, and the pipeline "fails" even though
+# the symbol is present. (Exactly this bit the first CI runs.)
 for t in "${!ABI[@]}"; do
   so="$OUT/jniLibs/${ABI[$t]}/$LIBNAME"
+  dynsyms="$("$NM" -D "$so")"
   for sym in ant_init ant_start_gateway freedom_ipfs_node_new_with_data_dir freedom_ipfs_node_start_gateway_online; do
-    "$NM" -D "$so" | grep -q " T $sym" || fail_with_diagnostics "$so" "missing export $sym"
+    grep -q " T $sym" <<<"$dynsyms" || fail_with_diagnostics "$so" "missing export $sym"
   done
-  "$READELF" -d "$so" | grep -q "SONAME.*$LIBNAME" || fail_with_diagnostics "$so" "missing SONAME"
+  dyn="$("$READELF" -d "$so")"
+  grep -q "SONAME.*$LIBNAME" <<<"$dyn" || fail_with_diagnostics "$so" "missing SONAME"
   echo "    ${ABI[$t]}: $(du -h "$so" | cut -f1) ok"
 done
 
