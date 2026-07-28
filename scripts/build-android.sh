@@ -79,12 +79,27 @@ echo "==> Verifying exported symbols + SONAME"
 NDK_BIN="$(ls -d "${ANDROID_NDK_HOME:-/nonexistent}"/toolchains/llvm/prebuilt/*/bin 2>/dev/null | head -1)"
 NM="${NDK_BIN:+$NDK_BIN/llvm-nm}"; NM="${NM:-$(command -v llvm-nm || echo nm)}"
 READELF="${NDK_BIN:+$NDK_BIN/llvm-readelf}"; READELF="${READELF:-$(command -v llvm-readelf || echo readelf)}"
+fail_with_diagnostics() {
+  local so="$1" why="$2"
+  {
+    echo "$so: $why"
+    echo "--- tools: NM=$NM READELF=$READELF"
+    file "$so" 2>/dev/null || true
+    echo "--- ELF header + dynamic:"
+    "$READELF" -h -d "$so" 2>&1 | head -30
+    echo "--- dynamic T-symbol count: $("$NM" -D "$so" 2>/dev/null | grep -c ' T ' || true)"
+    echo "--- first dynamic symbols:"
+    "$NM" -D "$so" 2>&1 | head -25
+  } >&2
+  exit 1
+}
+
 for t in "${!ABI[@]}"; do
   so="$OUT/jniLibs/${ABI[$t]}/$LIBNAME"
   for sym in ant_init ant_start_gateway freedom_ipfs_node_new_with_data_dir freedom_ipfs_node_start_gateway_online; do
-    "$NM" -D "$so" | grep -q " T $sym" || { echo "$so: missing export $sym" >&2; exit 1; }
+    "$NM" -D "$so" | grep -q " T $sym" || fail_with_diagnostics "$so" "missing export $sym"
   done
-  "$READELF" -d "$so" | grep -q "SONAME.*$LIBNAME" || { echo "$so: missing SONAME" >&2; exit 1; }
+  "$READELF" -d "$so" | grep -q "SONAME.*$LIBNAME" || fail_with_diagnostics "$so" "missing SONAME"
   echo "    ${ABI[$t]}: $(du -h "$so" | cut -f1) ok"
 done
 
