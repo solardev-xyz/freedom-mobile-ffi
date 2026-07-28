@@ -70,11 +70,15 @@ for t in "${!ABI[@]}"; do
 done
 
 # Guard against LTO/linker stripping regressions: both C surfaces must
-# be dynamic-exported, and the SONAME must have stuck. llvm-nm/readelf
-# come from the NDK cargo-ndk already located; fall back to host tools.
+# be dynamic-exported, and the SONAME must have stuck. Prefer the NDK's
+# llvm tools (always present when the build itself succeeded, and
+# guaranteed to read Android ELFs); fall back to host tools for odd
+# setups where ANDROID_NDK_HOME isn't exported but cargo-ndk found the
+# NDK its own way.
 echo "==> Verifying exported symbols + SONAME"
-NM="$(command -v llvm-nm || echo nm)"
-READELF="$(command -v llvm-readelf || echo readelf)"
+NDK_BIN="$(ls -d "${ANDROID_NDK_HOME:-/nonexistent}"/toolchains/llvm/prebuilt/*/bin 2>/dev/null | head -1)"
+NM="${NDK_BIN:+$NDK_BIN/llvm-nm}"; NM="${NM:-$(command -v llvm-nm || echo nm)}"
+READELF="${NDK_BIN:+$NDK_BIN/llvm-readelf}"; READELF="${READELF:-$(command -v llvm-readelf || echo readelf)}"
 for t in "${!ABI[@]}"; do
   so="$OUT/jniLibs/${ABI[$t]}/$LIBNAME"
   for sym in ant_init ant_start_gateway freedom_ipfs_node_new_with_data_dir freedom_ipfs_node_start_gateway_online; do
