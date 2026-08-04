@@ -33,7 +33,7 @@ default = ["chain"]
 chain = ["ant-ffi/chain"]
 
 [dependencies]
-ant-ffi = { git = "ssh://git@github.com/solardev-xyz/ant.git", tag = "v0.5.42" }
+ant-ffi = { git = "ssh://git@github.com/solardev-xyz/ant.git", tag = "v0.5.43" }
 freedom-ipfs-mobile = { git = "ssh://git@github.com/solardev-xyz/freedom-ipfs.git", tag = "v0.4.3" }
 
 # Local-dev override: point at sibling checkouts to test un-tagged work

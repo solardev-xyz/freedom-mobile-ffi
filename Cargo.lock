@@ -115,8 +115,8 @@ dependencies = [
 
 [[package]]
 name = "ant-chain"
-version = "0.5.42"
-source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.42#ce03676038292ae4bf9c9a60a2504afd6fcd80a1"
+version = "0.5.43"
+source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.43#25805db441a944df20410419196fe3d976e5c218"
 dependencies = [
  "ant-crypto",
  "getrandom 0.3.4",
@@ -135,8 +135,8 @@ dependencies = [
 
 [[package]]
 name = "ant-control"
-version = "0.5.42"
-source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.42#ce03676038292ae4bf9c9a60a2504afd6fcd80a1"
+version = "0.5.43"
+source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.43#25805db441a944df20410419196fe3d976e5c218"
 dependencies = [
  "hex",
  "serde",
@@ -148,8 +148,8 @@ dependencies = [
 
 [[package]]
 name = "ant-crypto"
-version = "0.5.42"
-source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.42#ce03676038292ae4bf9c9a60a2504afd6fcd80a1"
+version = "0.5.43"
+source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.43#25805db441a944df20410419196fe3d976e5c218"
 dependencies = [
  "getrandom 0.3.4",
  "k256",
@@ -159,8 +159,8 @@ dependencies = [
 
 [[package]]
 name = "ant-ffi"
-version = "0.5.42"
-source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.42#ce03676038292ae4bf9c9a60a2504afd6fcd80a1"
+version = "0.5.43"
+source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.43#25805db441a944df20410419196fe3d976e5c218"
 dependencies = [
  "ant-chain",
  "ant-control",
@@ -185,8 +185,8 @@ dependencies = [
 
 [[package]]
 name = "ant-gateway"
-version = "0.5.42"
-source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.42#ce03676038292ae4bf9c9a60a2504afd6fcd80a1"
+version = "0.5.43"
+source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.43#25805db441a944df20410419196fe3d976e5c218"
 dependencies = [
  "ant-chain",
  "ant-control",
@@ -213,8 +213,8 @@ dependencies = [
 
 [[package]]
 name = "ant-node"
-version = "0.5.42"
-source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.42#ce03676038292ae4bf9c9a60a2504afd6fcd80a1"
+version = "0.5.43"
+source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.43#25805db441a944df20410419196fe3d976e5c218"
 dependencies = [
  "ant-control",
  "ant-crypto",
@@ -234,8 +234,8 @@ dependencies = [
 
 [[package]]
 name = "ant-p2p"
-version = "0.5.42"
-source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.42#ce03676038292ae4bf9c9a60a2504afd6fcd80a1"
+version = "0.5.43"
+source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.43#25805db441a944df20410419196fe3d976e5c218"
 dependencies = [
  "ant-chain",
  "ant-control",
@@ -263,8 +263,8 @@ dependencies = [
 
 [[package]]
 name = "ant-postage"
-version = "0.5.42"
-source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.42#ce03676038292ae4bf9c9a60a2504afd6fcd80a1"
+version = "0.5.43"
+source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.43#25805db441a944df20410419196fe3d976e5c218"
 dependencies = [
  "ant-crypto",
  "hex",
@@ -275,8 +275,8 @@ dependencies = [
 
 [[package]]
 name = "ant-retrieval"
-version = "0.5.42"
-source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.42#ce03676038292ae4bf9c9a60a2504afd6fcd80a1"
+version = "0.5.43"
+source = "git+ssh://git@github.com/solardev-xyz/ant.git?tag=v0.5.43#25805db441a944df20410419196fe3d976e5c218"
 dependencies = [
  "ant-crypto",
  "ant-postage",
