@@ -36,19 +36,25 @@ echo "==> Resolving header sources from cargo metadata"
 META="$(cd "$ROOT" && cargo metadata --format-version 1)"
 ant_manifest="$(jq -r '.packages[] | select(.name=="ant-ffi") | .manifest_path' <<<"$META")"
 ipfs_manifest="$(jq -r '.packages[] | select(.name=="freedom-ipfs-mobile") | .manifest_path' <<<"$META")"
+myotis_manifest="$(jq -r '.packages[] | select(.name=="myotis-engine") | .manifest_path' <<<"$META")"
 ANT_HEADER="$(dirname "$ant_manifest")/include/ant.h"
 IPFS_HEADER="$(dirname "$ipfs_manifest")/../../ffi/include/freedom_ipfs.h"
-for h in "$ANT_HEADER" "$IPFS_HEADER"; do
+# myotis_engine.h lives at the myotis Rust workspace root under include/
+# (one level up from the myotis-engine crate).
+MYOTIS_HEADER="$(dirname "$myotis_manifest")/../include/myotis_engine.h"
+for h in "$ANT_HEADER" "$IPFS_HEADER" "$MYOTIS_HEADER"; do
   [ -f "$h" ] || { echo "header not found: $h" >&2; exit 1; }
 done
-echo "    ant.h          <- $ANT_HEADER"
-echo "    freedom_ipfs.h <- $IPFS_HEADER"
+echo "    ant.h           <- $ANT_HEADER"
+echo "    freedom_ipfs.h  <- $IPFS_HEADER"
+echo "    myotis_engine.h <- $MYOTIS_HEADER"
 
 echo "==> Staging union headers + modulemap"
 rm -rf "$OUT"
 mkdir -p "$HDRS"
 cp "$ANT_HEADER" "$HDRS/ant.h"
 cp "$IPFS_HEADER" "$HDRS/freedom_ipfs.h"
+cp "$MYOTIS_HEADER" "$HDRS/myotis_engine.h"
 cp "$ROOT/include/module.modulemap" "$HDRS/module.modulemap"
 
 echo "==> lipo fat simulator slice"

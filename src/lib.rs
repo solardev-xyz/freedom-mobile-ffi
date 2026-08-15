@@ -14,3 +14,8 @@
 
 pub use ant_ffi::*;
 pub use freedom_ipfs_mobile::*;
+// SPIKE (Phase 0): third member — Myotis (`myotis_*` C ABI), same
+// re-export-to-retain-symbols pattern; namespace disjoint from the others.
+// Unlike ant-ffi, myotis-engine keeps its C surface in a `capi` module
+// rather than the crate root.
+pub use myotis_engine::capi::*;

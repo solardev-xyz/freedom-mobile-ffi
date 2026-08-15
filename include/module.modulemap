@@ -8,6 +8,7 @@
 module FreedomMobile {
     header "ant.h"
     header "freedom_ipfs.h"
+    header "myotis_engine.h"
     link framework "Security"
     link framework "SystemConfiguration"
     link framework "CoreFoundation"

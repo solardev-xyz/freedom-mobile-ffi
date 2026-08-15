@@ -35,6 +35,10 @@ chain = ["ant-ffi/chain"]
 [dependencies]
 ant-ffi = { git = "ssh://git@github.com/solardev-xyz/ant.git", tag = "v0.5.43" }
 freedom-ipfs-mobile = { git = "ssh://git@github.com/solardev-xyz/freedom-ipfs.git", tag = "v0.4.3" }
+# SPIKE (Phase 0): Myotis — fully-P2P verified Ethereum light client
+# (myotis_* C ABI, JSON-over-C-strings like ant_*). v0.1.7 = engine ABI 22,
+# the revision freedom-browser PR #181 validates. Public repo, https is fine.
+myotis-engine = { git = "https://github.com/biafra23/myotis.git", tag = "v0.1.7" }
 
 # Local-dev override: point at sibling checkouts to test un-tagged work
 # before cutting tags (uncomment these, comment the git deps above).
