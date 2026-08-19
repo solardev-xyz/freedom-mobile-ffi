@@ -19,3 +19,10 @@ pub use freedom_ipfs_mobile::*;
 // Unlike ant-ffi, myotis-engine keeps its C surface in a `capi` module
 // rather than the crate root.
 pub use myotis_engine::capi::*;
+// Fourth member: Radicle. Its C surface is UniFFI scaffolding
+// (`uniffi_libradicle_uniffi_*` + `ffi_libradicle_uniffi_*`), emitted by
+// macros as #[no_mangle] extern "C" — the same re-export keeps the crate in
+// the link graph so the staticlib retains them. Namespace disjoint again.
+// Feature-gated so the Android slice (--no-default-features) skips it.
+#[cfg(feature = "radicle")]
+pub use libradicle_uniffi::*;

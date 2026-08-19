@@ -1,0 +1,25 @@
+# Workspace-local UniFFI bindings generator (the standard UniFFI pattern:
+# a tiny bin wrapping the bindgen CLI, pinned to the exact uniffi version
+# the libradicle-uniffi scaffolding links against — a version skew between
+# scaffolding and generator is a build error by design; mirrors
+# libradicle's own `uniffi-bindgen/` crate).
+#
+# Deliberately NOT part of the staticlib build graph: uniffi's `cli`
+# feature drags clap et al., which have no business in the mobile slice.
+# `scripts/build-xcframework.sh` runs it in library mode against the
+# compiled staticlib to emit the Swift glue + C header.
+[package]
+name = "uniffi-bindgen"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Standalone package — do not absorb into (or walk up to) any workspace.
+[workspace]
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/main.rs"
+
+[dependencies]
+uniffi = { version = "0.32", features = ["cli"] }

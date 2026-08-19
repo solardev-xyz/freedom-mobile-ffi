@@ -1,0 +1,22 @@
+# No-op stand-in for crates.io `sqlite3-src` 0.7.0 (see README.md).
+#
+# The real crate's lib is an empty `#![no_std]`; all it does is compile
+# the SQLite amalgamation from build.rs and declare `links = "sqlite3"`.
+# This stand-in does neither: no C build, no `links` claim. Radicle's
+# `sqlite3-sys` bindings then resolve at final app link against the ONE
+# bundled SQLite that ant's `rusqlite`/`libsqlite3-sys` already
+# contributes to the merged staticlib.
+[package]
+name = "sqlite3-src"
+version = "0.7.0"
+edition = "2021"
+license = "Apache-2.0 OR MIT"
+description = "No-op sqlite3-src: SQLite is provided by libsqlite3-sys in the merged staticlib"
+publish = false
+
+[features]
+bundled = []
+
+[lib]
+name = "sqlite3_src"
+path = "src/lib.rs"
