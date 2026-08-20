@@ -4735,8 +4735,8 @@ dependencies = [
 
 [[package]]
 name = "libradicle"
-version = "0.5.0"
-source = "git+ssh://git@github.com/solardev-xyz/libradicle.git?rev=85f753260e528de739b9f7aeac8a611795bae403#85f753260e528de739b9f7aeac8a611795bae403"
+version = "0.7.1"
+source = "git+ssh://git@github.com/solardev-xyz/libradicle.git?tag=v0.7.1#34cc3cc1b1969fe15b0176b3666c8fa1a1d4c9e8"
 dependencies = [
  "getrandom 0.4.3",
  "git2",
@@ -4750,8 +4750,8 @@ dependencies = [
 
 [[package]]
 name = "libradicle-uniffi"
-version = "0.5.0"
-source = "git+ssh://git@github.com/solardev-xyz/libradicle.git?rev=85f753260e528de739b9f7aeac8a611795bae403#85f753260e528de739b9f7aeac8a611795bae403"
+version = "0.7.1"
+source = "git+ssh://git@github.com/solardev-xyz/libradicle.git?tag=v0.7.1#34cc3cc1b1969fe15b0176b3666c8fa1a1d4c9e8"
 dependencies = [
  "libradicle",
  "radicle",
@@ -8811,7 +8811,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
