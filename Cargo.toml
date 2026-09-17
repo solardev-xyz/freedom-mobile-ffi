@@ -40,9 +40,9 @@ radicle = ["dep:libradicle-uniffi"]
 ant-ffi = { git = "ssh://git@github.com/solardev-xyz/ant.git", tag = "v0.5.43" }
 freedom-ipfs-mobile = { git = "ssh://git@github.com/solardev-xyz/freedom-ipfs.git", tag = "v0.4.3" }
 # SPIKE (Phase 0): Myotis — fully-P2P verified Ethereum light client
-# (myotis_* C ABI, JSON-over-C-strings like ant_*). v0.1.7 = engine ABI 22,
-# the revision freedom-browser PR #181 validates. Public repo, https is fine.
-myotis-engine = { git = "https://github.com/biafra23/myotis.git", tag = "v0.1.7" }
+# (myotis_* C ABI, JSON-over-C-strings like ant_*). v0.1.10 = engine ABI 26 (caller-supplied checkpoint bootstrap,
+# freedom-browser PR #353 stale-anchor recovery). Public repo, https is fine.
+myotis-engine = { git = "https://github.com/biafra23/myotis.git", tag = "v0.1.10" }
 # Fourth member: Radicle (UniFFI `uniffi_libradicle_uniffi_*` scaffolding
 # symbols, JSON-string returns mirroring the desktop napi addon). `no-spawn`
 # is what lets the phone publish: the embedded node serves fetches in-process
