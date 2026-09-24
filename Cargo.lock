@@ -3892,7 +3892,7 @@ dependencies = [
  "js-sys",
  "log",
  "wasm-bindgen",
- "windows-core 0.58.0",
+ "windows-core 0.62.2",
 ]
 
 [[package]]
@@ -5151,16 +5151,16 @@ dependencies = [
 
 [[package]]
 name = "myotis-bls"
-version = "0.1.10"
-source = "git+https://github.com/biafra23/myotis.git?tag=v0.1.10#7c9629686251df5deb4a796d02439beda5d7ac6e"
+version = "0.1.12"
+source = "git+https://github.com/biafra23/myotis.git?tag=v0.1.12#fb118a8b5f62d3d559783e035c4526f2d186df38"
 dependencies = [
  "blst",
 ]
 
 [[package]]
 name = "myotis-consensus"
-version = "0.1.10"
-source = "git+https://github.com/biafra23/myotis.git?tag=v0.1.10#7c9629686251df5deb4a796d02439beda5d7ac6e"
+version = "0.1.12"
+source = "git+https://github.com/biafra23/myotis.git?tag=v0.1.12#fb118a8b5f62d3d559783e035c4526f2d186df38"
 dependencies = [
  "myotis-bls",
  "sha2 0.10.9",
@@ -5169,8 +5169,8 @@ dependencies = [
 
 [[package]]
 name = "myotis-core"
-version = "0.1.10"
-source = "git+https://github.com/biafra23/myotis.git?tag=v0.1.10#7c9629686251df5deb4a796d02439beda5d7ac6e"
+version = "0.1.12"
+source = "git+https://github.com/biafra23/myotis.git?tag=v0.1.12#fb118a8b5f62d3d559783e035c4526f2d186df38"
 dependencies = [
  "k256",
  "sha3 0.10.9",
@@ -5178,8 +5178,8 @@ dependencies = [
 
 [[package]]
 name = "myotis-engine"
-version = "0.1.10"
-source = "git+https://github.com/biafra23/myotis.git?tag=v0.1.10#7c9629686251df5deb4a796d02439beda5d7ac6e"
+version = "0.1.12"
+source = "git+https://github.com/biafra23/myotis.git?tag=v0.1.12#fb118a8b5f62d3d559783e035c4526f2d186df38"
 dependencies = [
  "myotis-consensus",
  "myotis-evm",
@@ -5194,8 +5194,8 @@ dependencies = [
 
 [[package]]
 name = "myotis-evm"
-version = "0.1.10"
-source = "git+https://github.com/biafra23/myotis.git?tag=v0.1.10#7c9629686251df5deb4a796d02439beda5d7ac6e"
+version = "0.1.12"
+source = "git+https://github.com/biafra23/myotis.git?tag=v0.1.12#fb118a8b5f62d3d559783e035c4526f2d186df38"
 dependencies = [
  "myotis-core",
  "revm",
@@ -5203,8 +5203,8 @@ dependencies = [
 
 [[package]]
 name = "myotis-net"
-version = "0.1.10"
-source = "git+https://github.com/biafra23/myotis.git?tag=v0.1.10#7c9629686251df5deb4a796d02439beda5d7ac6e"
+version = "0.1.12"
+source = "git+https://github.com/biafra23/myotis.git?tag=v0.1.12#fb118a8b5f62d3d559783e035c4526f2d186df38"
 dependencies = [
  "aes",
  "async-trait",
