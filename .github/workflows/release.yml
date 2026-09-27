@@ -1,0 +1,103 @@
+# Release workflow: build FreedomMobile.xcframework on a macOS runner and
+# publish it as a GitHub Release asset with its SwiftPM checksum.
+#
+# Trigger: push a tag like `v0.12.1`, or run manually (workflow_dispatch)
+# with `tag` set to build an existing tag. Leaving `publish` off makes a
+# manual run a dry run: the zip is only uploaded as a workflow artifact.
+#
+# The release notes list the pinned node versions (from Cargo.toml) and the
+# SwiftPM checksum; edit them afterwards to add highlights. An existing
+# release asset is never overwritten: SwiftPM consumers pin the checksum,
+# so a silently replaced zip would break their builds.
+#
+# Android consumers don't need anything from here: freedom-browser-android
+# builds libfreedom_mobile_ffi.so from the tag in its own release workflow.
+
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build (e.g. v0.12.1)"
+        required: true
+      publish:
+        description: "Create the GitHub Release (off = dry run, artifact only)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  xcframework:
+    runs-on: macos-15
+    env:
+      TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+      PUBLISH: ${{ github.event_name == 'push' || inputs.publish }}
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      # Node deps are pinned as ssh:// git URLs (local-dev convenience);
+      # all of them are public, so fetch over https.
+      - name: Rewrite ssh git deps to https
+        run: git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+
+      - name: Install Rust toolchain + iOS targets (rust-toolchain.toml)
+        run: rustup toolchain install
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build FreedomMobile.xcframework
+        env:
+          CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+        run: ./scripts/build-xcframework.sh
+
+      - name: Zip + checksum
+        id: pkg
+        run: |
+          cd target/ios-xcframework
+          ditto -c -k --keepParent FreedomMobile.xcframework FreedomMobile.xcframework.zip
+          sum="$(swift package compute-checksum FreedomMobile.xcframework.zip)"
+          echo "checksum=$sum" >> "$GITHUB_OUTPUT"
+          ls -la FreedomMobile.xcframework.zip
+          echo "SwiftPM checksum: $sum"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: FreedomMobile.xcframework-${{ env.TAG }}
+          path: |
+            target/ios-xcframework/FreedomMobile.xcframework.zip
+            target/radicle-uniffi/libradicle_uniffi.swift
+
+      - name: Publish release
+        if: env.PUBLISH == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHECKSUM: ${{ steps.pkg.outputs.checksum }}
+        run: |
+          ZIP=target/ios-xcframework/FreedomMobile.xcframework.zip
+          pin() { sed -nE "s/^$1 *=.*tag *= *\"([^\"]+)\".*/\1/p" Cargo.toml; }
+          {
+            echo "ant $(pin ant-ffi) + freedom-ipfs $(pin freedom-ipfs-mobile) + myotis $(pin myotis-engine) + libradicle $(pin libradicle-uniffi)."
+            echo
+            echo "SwiftPM checksum: \`$CHECKSUM\`"
+          } > notes.md
+          cat notes.md
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            if gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx FreedomMobile.xcframework.zip; then
+              echo "::error::Release $TAG already has FreedomMobile.xcframework.zip; refusing to replace it (SwiftPM consumers pin the checksum)."
+              exit 1
+            fi
+            gh release upload "$TAG" "$ZIP"
+            echo "::notice::Uploaded to existing release $TAG; add the checksum ($CHECKSUM) to its notes if missing."
+          else
+            gh release create "$TAG" "$ZIP" --verify-tag --title "$TAG" --notes-file notes.md
+          fi
