@@ -37,7 +37,7 @@ chain = ["ant-ffi/chain"]
 radicle = ["dep:libradicle-uniffi"]
 
 [dependencies]
-ant-ffi = { git = "ssh://git@github.com/solardev-xyz/ant.git", tag = "v0.5.43" }
+ant-ffi = { git = "ssh://git@github.com/solardev-xyz/ant.git", tag = "v0.5.46" }
 freedom-ipfs-mobile = { git = "ssh://git@github.com/solardev-xyz/freedom-ipfs.git", tag = "v0.4.3" }
 # SPIKE (Phase 0): Myotis — fully-P2P verified Ethereum light client
 # (myotis_* C ABI, JSON-over-C-strings like ant_*). v0.1.12 = engine ABI 32 (#465 fixes: peer-head admission/ranking,
