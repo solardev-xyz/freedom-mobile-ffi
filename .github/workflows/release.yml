@@ -4,6 +4,12 @@
 # Trigger: push a tag like `v0.12.1`, or run manually (workflow_dispatch)
 # with `tag` set to build an existing tag. Leaving `publish` off makes a
 # manual run a dry run: the zip is only uploaded as a workflow artifact.
+# Every pull request also gets a dry run, so header / modulemap / build
+# script changes are built on macOS before they merge, not at release time.
+#
+# The `pins` job refuses git deps pinned by `rev`/`branch` (see
+# scripts/check-release-pins.sh): an upstream PR head can disappear once
+# that PR is squash-merged, and neither main nor a release may depend on it.
 #
 # The release notes list the pinned node versions (from Cargo.toml) and the
 # SwiftPM checksum; edit them afterwards to add highlights. An existing
@@ -18,6 +24,7 @@ name: release
 on:
   push:
     tags: ["v*"]
+  pull_request:
   workflow_dispatch:
     inputs:
       tag:
@@ -32,16 +39,26 @@ permissions:
   contents: write
 
 jobs:
+  pins:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || '' }}
+      - name: All node deps pinned by release tag
+        run: ./scripts/check-release-pins.sh
+
   xcframework:
     runs-on: macos-15
     env:
-      TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
-      PUBLISH: ${{ github.event_name == 'push' || inputs.publish }}
+      # PR dry runs are labelled pr-<n> (artifact names can't contain '/').
+      TAG: ${{ github.event_name == 'push' && github.ref_name || github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || inputs.tag }}
+      PUBLISH: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish) }}
     steps:
       - name: Checkout tag
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.TAG }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || env.TAG }}
 
       # Node deps are pinned as ssh:// git URLs (local-dev convenience);
       # all of them are public, so fetch over https.
@@ -76,6 +93,10 @@ jobs:
           path: |
             target/ios-xcframework/FreedomMobile.xcframework.zip
             target/radicle-uniffi/libradicle_uniffi.swift
+
+      - name: Refuse unreleased pins
+        if: env.PUBLISH == 'true'
+        run: ./scripts/check-release-pins.sh
 
       - name: Publish release
         if: env.PUBLISH == 'true'
