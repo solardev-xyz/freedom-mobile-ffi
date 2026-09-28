@@ -16,6 +16,15 @@
 //! port is closed, so a caller that keeps routing `.onion` to it fails
 //! closed.
 //!
+//! Trust boundary: a loopback port is reachable by every app on the device,
+//! and Chromium's SOCKS5 client can't authenticate, so the listener can't
+//! tell the browser's connections from another app's. What another app can
+//! get is exactly what it could get by embedding Tor itself — `.onion`
+//! streams, never an exit — so the listener only bounds what a misbehaving
+//! peer can *cost*: the handshake must complete within
+//! [`HANDSHAKE_TIMEOUT`], and at most [`MAX_CONNECTIONS`] connections are
+//! served at once (further ones are closed on accept).
+//!
 //! C header: `include/freedom_tor.h`.
 
 use std::ffi::{c_char, CStr, CString};
@@ -35,9 +44,20 @@ use tor_rtcompat::PreferredRuntime;
 pub const ARTI_VERSION: &str = "0.46.0";
 
 /// How long a CONNECT may take (onion-service rendezvous included) before
-/// the SOCKS client is told the host is unreachable. Chromium's own
-/// connect timeout is longer, so this is what the page sees.
+/// the SOCKS client is told the host is unreachable (reply 0x04, the same
+/// as a failed connect). Chromium's own connect timeout is longer, so this
+/// is what the page sees.
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(120);
+
+/// How long a client has to send its greeting and CONNECT request. A peer
+/// that opens the port and goes quiet is dropped after this, so it can't
+/// pin a task and a file descriptor for good.
+pub const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(10);
+
+/// Connections served at once; one accepted past this is closed straight
+/// away. Far above what a browser opens to one proxy, far below the
+/// process's fd limit.
+pub const MAX_CONNECTIONS: usize = 256;
 
 struct Running {
     runtime: tokio::runtime::Runtime,
@@ -145,6 +165,7 @@ fn start(state_dir: PathBuf, cache_dir: PathBuf, socks_port: u16) -> Result<Runn
     }
     {
         let client = client.clone();
+        let permits = Arc::new(tokio::sync::Semaphore::new(MAX_CONNECTIONS));
         runtime.spawn(async move {
             loop {
                 let sock = match listener.accept().await {
@@ -155,9 +176,15 @@ fn start(state_dir: PathBuf, cache_dir: PathBuf, socks_port: u16) -> Result<Runn
                         continue;
                     }
                 };
+                // At the cap: close it rather than queue it.
+                let Ok(permit) = permits.clone().try_acquire_owned() else {
+                    drop(sock);
+                    continue;
+                };
                 let client = client.clone();
                 tokio::spawn(async move {
                     let _ = serve(sock, client).await;
+                    drop(permit);
                 });
             }
         });
@@ -167,7 +194,6 @@ fn start(state_dir: PathBuf, cache_dir: PathBuf, socks_port: u16) -> Result<Runn
 
 // SOCKS5 (RFC 1928) reply codes.
 const REP_OK: u8 = 0x00;
-const REP_GENERAL: u8 = 0x01;
 const REP_NOT_ALLOWED: u8 = 0x02;
 const REP_HOST_UNREACHABLE: u8 = 0x04;
 const REP_CMD_UNSUPPORTED: u8 = 0x07;
@@ -188,18 +214,21 @@ async fn reply(sock: &mut TcpStream, code: u8) -> std::io::Result<()> {
     sock.write_all(&[5, code, 0, 1, 0, 0, 0, 0, 0, 0]).await
 }
 
-async fn serve(mut sock: TcpStream, client: Arc<TorClient<PreferredRuntime>>) -> std::io::Result<()> {
+/// Read the SOCKS5 greeting and request, answering refusals itself.
+/// `Some((host, port))` is an allowed `.onion` CONNECT still awaiting its
+/// reply; `None` means the exchange is over (refused or not SOCKS5).
+async fn handshake(sock: &mut TcpStream) -> std::io::Result<Option<(String, u16)>> {
     // Greeting: VER NMETHODS METHODS…; we only speak "no authentication".
     let mut hdr = [0u8; 2];
     sock.read_exact(&mut hdr).await?;
     if hdr[0] != 5 {
-        return Ok(());
+        return Ok(None);
     }
     let mut methods = vec![0u8; hdr[1] as usize];
     sock.read_exact(&mut methods).await?;
     if !methods.contains(&0) {
         sock.write_all(&[5, 0xff]).await?;
-        return Ok(());
+        return Ok(None);
     }
     sock.write_all(&[5, 0]).await?;
 
@@ -207,7 +236,7 @@ async fn serve(mut sock: TcpStream, client: Arc<TorClient<PreferredRuntime>>) ->
     let mut req = [0u8; 4];
     sock.read_exact(&mut req).await?;
     if req[0] != 5 {
-        return Ok(());
+        return Ok(None);
     }
     let host = match req[3] {
         3 => {
@@ -228,23 +257,36 @@ async fn serve(mut sock: TcpStream, client: Arc<TorClient<PreferredRuntime>>) ->
             None
         }
         _ => {
-            reply(&mut sock, REP_ATYP_UNSUPPORTED).await?;
-            return Ok(());
+            reply(sock, REP_ATYP_UNSUPPORTED).await?;
+            return Ok(None);
         }
     };
     let mut port = [0u8; 2];
     sock.read_exact(&mut port).await?;
     let port = u16::from_be_bytes(port);
     if req[1] != 1 {
-        reply(&mut sock, REP_CMD_UNSUPPORTED).await?;
-        return Ok(());
+        reply(sock, REP_CMD_UNSUPPORTED).await?;
+        return Ok(None);
     }
     // Onion-only: IP literals and clearnet names never leave through an exit.
     let Some(host) = host
         .filter(|h| is_onion_host(h))
         .map(|h| h.trim_end_matches('.').to_string())
     else {
-        reply(&mut sock, REP_NOT_ALLOWED).await?;
+        reply(sock, REP_NOT_ALLOWED).await?;
+        return Ok(None);
+    };
+    Ok(Some((host, port)))
+}
+
+/// [`handshake`] bounded by `limit`: `None` (close the socket) when it was
+/// refused, wasn't SOCKS5, failed, or the peer was too slow.
+async fn read_target(sock: &mut TcpStream, limit: Duration) -> Option<(String, u16)> {
+    tokio::time::timeout(limit, handshake(sock)).await.ok()?.ok()?
+}
+
+async fn serve(mut sock: TcpStream, client: Arc<TorClient<PreferredRuntime>>) -> std::io::Result<()> {
+    let Some((host, port)) = read_target(&mut sock, HANDSHAKE_TIMEOUT).await else {
         return Ok(());
     };
 
@@ -256,7 +298,8 @@ async fn serve(mut sock: TcpStream, client: Arc<TorClient<PreferredRuntime>>) ->
             return Ok(());
         }
         Err(_) => {
-            reply(&mut sock, REP_GENERAL).await?;
+            tracing::info!(target: "freedom_tor", "connect to {host}:{port} timed out");
+            reply(&mut sock, REP_HOST_UNREACHABLE).await?;
             return Ok(());
         }
     };
@@ -290,7 +333,7 @@ pub extern "C" fn freedom_tor_status_json() -> *mut c_char {
         None => r#"{"state":"stopped"}"#.to_string(),
         Some(r) => {
             let st = r.client.bootstrap_status();
-            let err = r.last_error.lock().unwrap_or_else(|p| p.into_inner()).clone();
+            let err = current_error(&r.last_error, st.ready_for_traffic());
             let blocked = st.blocked().map(|b| b.to_string());
             format!(
                 r#"{{"state":"{}","port":{},"progress":{},"summary":{},"blocked":{},"error":{}}}"#,
@@ -304,6 +347,18 @@ pub extern "C" fn freedom_tor_status_json() -> *mut c_char {
         }
     };
     CString::new(json).unwrap_or_default().into_raw()
+}
+
+/// The background bootstrap's failure, if it still applies. Once the client
+/// is ready for traffic (e.g. a later CONNECT bootstrapped it on demand) the
+/// old failure is stale, so it's cleared rather than reported next to
+/// `"running"`.
+fn current_error(last_error: &Mutex<Option<String>>, ready: bool) -> Option<String> {
+    let mut e = last_error.lock().unwrap_or_else(|p| p.into_inner());
+    if ready {
+        *e = None;
+    }
+    e.clone()
 }
 
 fn json_str(s: &str) -> String {
@@ -351,6 +406,65 @@ mod tests {
         assert!(!is_onion_host("example.com"));
         assert!(!is_onion_host("example.onion.com"));
         assert!(!is_onion_host("127.0.0.1"));
+    }
+
+    #[test]
+    fn stale_bootstrap_error_cleared_once_ready() {
+        let e = Mutex::new(Some("no network".to_string()));
+        assert_eq!(current_error(&e, false).as_deref(), Some("no network"));
+        assert_eq!(current_error(&e, true), None);
+        // Stays cleared: it described a failure that no longer applies.
+        assert_eq!(current_error(&e, false), None);
+    }
+
+    async fn pair() -> (TcpStream, TcpStream) {
+        let l = TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).await.unwrap();
+        let c = TcpStream::connect(l.local_addr().unwrap()).await.unwrap();
+        let (s, _) = l.accept().await.unwrap();
+        (c, s)
+    }
+
+    #[tokio::test]
+    async fn silent_peer_dropped_after_handshake_timeout() {
+        let (mut c, mut s) = pair().await;
+        let t = std::time::Instant::now();
+        assert_eq!(read_target(&mut s, Duration::from_millis(200)).await, None);
+        assert!(t.elapsed() < Duration::from_secs(5));
+        // A peer stalling mid-request is dropped the same way.
+        let (mut c2, mut s2) = pair().await;
+        c2.write_all(&[5, 1, 0, 5, 1, 0, 3]).await.unwrap();
+        assert_eq!(read_target(&mut s2, Duration::from_millis(200)).await, None);
+        drop(s2);
+        let mut buf = Vec::new();
+        c2.read_to_end(&mut buf).await.unwrap();
+        assert_eq!(buf, [5, 0]);
+        drop(s);
+        c.read_to_end(&mut buf).await.unwrap();
+    }
+
+    fn connect_req(host: &str, port: u16) -> Vec<u8> {
+        let mut r = vec![5, 1, 0, 5, 1, 0, 3, host.len() as u8];
+        r.extend_from_slice(host.as_bytes());
+        r.extend_from_slice(&port.to_be_bytes());
+        r
+    }
+
+    #[tokio::test]
+    async fn handshake_allows_onion_refuses_rest() {
+        let (mut c, mut s) = pair().await;
+        c.write_all(&connect_req("Example.ONION.", 80)).await.unwrap();
+        assert_eq!(
+            read_target(&mut s, HANDSHAKE_TIMEOUT).await,
+            Some(("Example.ONION".to_string(), 80))
+        );
+
+        let (mut c, mut s) = pair().await;
+        c.write_all(&connect_req("example.com", 443)).await.unwrap();
+        assert_eq!(read_target(&mut s, HANDSHAKE_TIMEOUT).await, None);
+        drop(s);
+        let mut buf = Vec::new();
+        c.read_to_end(&mut buf).await.unwrap();
+        assert_eq!(buf[..4], [5, 0, 5, REP_NOT_ALLOWED]);
     }
 
     #[test]
