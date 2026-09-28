@@ -2778,8 +2778,11 @@ dependencies = [
  "ant-ffi",
  "freedom-ipfs-mobile",
  "libradicle-uniffi",
+ "log",
  "myotis-engine",
  "serde_json",
+ "tracing",
+ "tracing-log",
  "tracing-subscriber 0.3.23",
 ]
 

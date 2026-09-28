@@ -45,7 +45,12 @@ ant-ffi = { git = "ssh://git@github.com/freedom-hq/ant.git", rev = "f92d8069c9d1
 freedom-ipfs-mobile = { git = "ssh://git@github.com/solardev-xyz/freedom-ipfs.git", rev = "1bc9ab924de3bbdc05f8cb1ae042d297976a7b44" }
 # The one process-wide subscriber carrying both nodes' layers
 # (`freedom_mobile_init_logging`). Same 0.3 the nodes already link.
-tracing-subscriber = { version = "0.3", default-features = false, features = ["registry", "std", "tracing-log"] }
+# `tracing` installs it and `tracing-log` bridges `log` records into it —
+# called directly rather than via `try_init`, which would report a
+# host-installed `log` logger as a failure after the subscriber is already in.
+tracing-subscriber = { version = "0.3", default-features = false, features = ["registry", "std"] }
+tracing = { version = "0.1", default-features = false, features = ["std"] }
+tracing-log = { version = "0.2", default-features = false, features = ["log-tracer", "std"] }
 # SPIKE (Phase 0): Myotis — fully-P2P verified Ethereum light client
 # (myotis_* C ABI, JSON-over-C-strings like ant_*). v0.1.12 = engine ABI 32 (#465 fixes: peer-head admission/ranking,
 # finalized-anchored windows, snapServingPeers, host seed pins; v0.1.11 hedged reads). Public repo, https is fine.
@@ -67,6 +72,8 @@ libradicle-uniffi = { git = "ssh://git@github.com/solardev-xyz/libradicle.git", 
 [dev-dependencies]
 # tests/radicle_smoke.rs parses the JSON-string returns.
 serde_json = "1"
+# tests/logging_log_preinstalled.rs installs a host `log` logger first.
+log = "0.4"
 
 # Radicle (heartwood → `sqlite` → sqlite3-sys → sqlite3-src) and ant
 # (rusqlite → libsqlite3-sys) both claim `links = "sqlite3"`, which cargo

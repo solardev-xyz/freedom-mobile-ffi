@@ -45,17 +45,29 @@ pub use libradicle_uniffi::*;
 /// one — installed now or by an earlier call — and false when something
 /// else had already claimed the slot (a node started first, or the host's
 /// own subscriber), in which case nothing changed.
+///
+/// Records from the `log` crate are bridged into the subscriber when the
+/// `log` slot is still free. That part is best effort: if the host already
+/// installed a `log` logger (e.g. `android_logger::init_once`), its logger
+/// keeps receiving them and the return value is still true — the tracing
+/// subscriber, which is what this call is for, is in place either way.
 #[no_mangle]
 pub extern "C" fn freedom_mobile_init_logging() -> bool {
     use std::sync::OnceLock;
+    use tracing_log::AsLog;
     use tracing_subscriber::layer::SubscriberExt;
-    use tracing_subscriber::util::SubscriberInitExt;
     static INSTALLED: OnceLock<bool> = OnceLock::new();
     *INSTALLED.get_or_init(|| {
-        tracing_subscriber::registry()
+        let subscriber = tracing_subscriber::registry()
             .with(ant_ffi::log_layer())
-            .with(freedom_ipfs_mobile::progress_layer())
-            .try_init()
-            .is_ok()
+            .with(freedom_ipfs_mobile::progress_layer());
+        if tracing::subscriber::set_global_default(subscriber).is_err() {
+            return false;
+        }
+        // After the subscriber, so the max-level hint is the subscriber's.
+        let _ = tracing_log::LogTracer::builder()
+            .with_max_level(tracing::level_filters::LevelFilter::current().as_log())
+            .init();
+        true
     })
 }

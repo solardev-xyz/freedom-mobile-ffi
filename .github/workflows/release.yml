@@ -4,8 +4,9 @@
 # Trigger: push a tag like `v0.12.1`, or run manually (workflow_dispatch)
 # with `tag` set to build an existing tag. Leaving `publish` off makes a
 # manual run a dry run: the zip is only uploaded as a workflow artifact.
-# Every pull request also gets a dry run, so header / modulemap / build
-# script changes are built on macOS before they merge, not at release time.
+# Every pull request (bar docs/tests-only ones) also gets a dry run, so
+# header / modulemap / build script changes are built on macOS before they
+# merge, not at release time.
 #
 # The `pins` job refuses git deps pinned by `rev`/`branch` (see
 # scripts/check-release-pins.sh): an upstream PR head can disappear once
@@ -25,6 +26,13 @@ on:
   push:
     tags: ["v*"]
   pull_request:
+    # Changes that can't affect the xcframework (docs, host-only tests)
+    # skip the macOS build. An ignore list rather than an allow list, so
+    # a new build input is covered without touching this file.
+    paths-ignore:
+      - "**.md"
+      - "tests/**"
+      - ".gitignore"
   workflow_dispatch:
     inputs:
       tag:
@@ -38,6 +46,12 @@ on:
 permissions:
   contents: write
 
+# A new push to a PR supersedes its running dry run. Tag pushes and manual
+# runs get a group of their own and are never cancelled mid-publish.
+concurrency:
+  group: release-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   pins:
     runs-on: ubuntu-latest
@@ -45,6 +59,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || '' }}
+      # check-release-pins.sh parses Cargo.toml with tomllib (3.11+).
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - name: All node deps pinned by release tag
         run: ./scripts/check-release-pins.sh
 
@@ -93,6 +111,12 @@ jobs:
           path: |
             target/ios-xcframework/FreedomMobile.xcframework.zip
             target/radicle-uniffi/libradicle_uniffi.swift
+
+      - name: Python for the pin check (tomllib, 3.11+)
+        if: env.PUBLISH == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
       - name: Refuse unreleased pins
         if: env.PUBLISH == 'true'
