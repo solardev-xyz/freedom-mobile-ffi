@@ -23,19 +23,29 @@
 //! streams, never an exit — so the listener only bounds what a misbehaving
 //! peer can *cost*: the handshake must complete within
 //! [`HANDSHAKE_TIMEOUT`], and at most [`MAX_CONNECTIONS`] connections are
-//! served at once (further ones are closed on accept).
+//! open at once. At the cap a new connection is not refused: the one that
+//! has gone longest without moving a byte (a stalled connect, an idle
+//! keep-alive) is closed to make room. Refusing instead would let a peer
+//! that parks [`MAX_CONNECTIONS`] cheap connections (CONNECTs to
+//! nonexistent onions, idle streams) lock the browser out of `.onion`;
+//! with eviction it has to keep opening or keep traffic flowing to hold
+//! its slots, and the browser's newest connection is never the one to go.
 //!
 //! C header: `include/freedom_tor.h`.
 
 use std::ffi::{c_char, CStr, CString};
 use std::net::{Ipv4Addr, SocketAddr};
 use std::path::PathBuf;
+use std::collections::HashMap;
+use std::pin::Pin;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::task::{Context, Poll};
+use std::time::{Duration, Instant};
 
 use arti_client::config::TorClientConfigBuilder;
 use arti_client::TorClient;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, ReadBuf};
 use tokio::net::{TcpListener, TcpStream};
 use tor_rtcompat::PreferredRuntime;
 
@@ -54,9 +64,9 @@ const CONNECT_TIMEOUT: Duration = Duration::from_secs(120);
 /// pin a task and a file descriptor for good.
 pub const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(10);
 
-/// Connections served at once; one accepted past this is closed straight
-/// away. Far above what a browser opens to one proxy, far below the
-/// process's fd limit.
+/// Connections open at once. Accepting one past this closes the idlest
+/// open connection (see [`Conns`]). Far above what a browser opens to one
+/// proxy, far below the process's fd limit.
 pub const MAX_CONNECTIONS: usize = 256;
 
 struct Running {
@@ -165,7 +175,7 @@ fn start(state_dir: PathBuf, cache_dir: PathBuf, socks_port: u16) -> Result<Runn
     }
     {
         let client = client.clone();
-        let permits = Arc::new(tokio::sync::Semaphore::new(MAX_CONNECTIONS));
+        let conns = Conns::new(MAX_CONNECTIONS);
         runtime.spawn(async move {
             loop {
                 let sock = match listener.accept().await {
@@ -176,20 +186,141 @@ fn start(state_dir: PathBuf, cache_dir: PathBuf, socks_port: u16) -> Result<Runn
                         continue;
                     }
                 };
-                // At the cap: close it rather than queue it.
-                let Ok(permit) = permits.clone().try_acquire_owned() else {
-                    drop(sock);
-                    continue;
-                };
                 let client = client.clone();
-                tokio::spawn(async move {
+                conns.spawn(sock, move |sock| async move {
                     let _ = serve(sock, client).await;
-                    drop(permit);
                 });
             }
         });
     }
     Ok(Running { runtime, client, port, last_error })
+}
+
+/// The listener's open connections, each with the time it last moved a
+/// byte. Admitting one at the cap first aborts the idlest, so the slots
+/// can't be held by connections that do nothing.
+#[derive(Clone)]
+struct Conns(Arc<ConnsInner>);
+
+struct ConnsInner {
+    cap: usize,
+    epoch: Instant,
+    next_id: AtomicU64,
+    open: Mutex<HashMap<u64, (Arc<AtomicU64>, tokio::task::AbortHandle)>>,
+}
+
+impl Conns {
+    fn new(cap: usize) -> Self {
+        Conns(Arc::new(ConnsInner {
+            cap,
+            epoch: Instant::now(),
+            next_id: AtomicU64::new(0),
+            open: Mutex::new(HashMap::new()),
+        }))
+    }
+
+    fn now(&self) -> u64 {
+        self.0.epoch.elapsed().as_millis() as u64
+    }
+
+    fn open(&self) -> std::sync::MutexGuard<'_, HashMap<u64, (Arc<AtomicU64>, tokio::task::AbortHandle)>> {
+        self.0.open.lock().unwrap_or_else(|p| p.into_inner())
+    }
+
+    #[cfg(test)]
+    fn len(&self) -> usize {
+        self.open().len()
+    }
+
+    /// Run `serve` on `sock` (wrapped so its reads and writes count as
+    /// activity) as a tracked task, evicting the idlest open connection
+    /// first if at the cap. Must be called within a tokio runtime.
+    fn spawn<F, Fut>(&self, sock: TcpStream, serve: F)
+    where
+        F: FnOnce(Touch<TcpStream>) -> Fut + Send + 'static,
+        Fut: std::future::Future<Output = ()> + Send + 'static,
+    {
+        let id = self.0.next_id.fetch_add(1, Ordering::Relaxed);
+        let last = Arc::new(AtomicU64::new(self.now()));
+        let sock = Touch { inner: sock, last: last.clone(), conns: self.clone() };
+        let this = self.clone();
+        let mut open = self.open();
+        let evicted = if open.len() >= self.0.cap {
+            let idlest = open
+                .iter()
+                .min_by_key(|(id, (t, _))| (t.load(Ordering::Relaxed), **id))
+                .map(|(id, _)| *id);
+            idlest.and_then(|id| open.remove(&id)).map(|(_, h)| h)
+        } else {
+            None
+        };
+        // Spawned and registered under the lock: the task's own removal
+        // (on finish or abort) waits for it, so it can't run first and
+        // leave a stale entry behind.
+        let task = tokio::spawn(async move {
+            let _guard = Deregister(this, id);
+            serve(sock).await;
+        });
+        open.insert(id, (last, task.abort_handle()));
+        drop(open);
+        if let Some(h) = evicted {
+            h.abort();
+        }
+    }
+}
+
+/// Drops a connection's entry when its task ends, aborted or not.
+struct Deregister(Conns, u64);
+
+impl Drop for Deregister {
+    fn drop(&mut self) {
+        self.0.open().remove(&self.1);
+    }
+}
+
+/// A connection's socket, stamping the time on every read or write that
+/// moves bytes.
+struct Touch<S> {
+    inner: S,
+    last: Arc<AtomicU64>,
+    conns: Conns,
+}
+
+impl<S> Touch<S> {
+    fn touch(&self) {
+        self.last.store(self.conns.now(), Ordering::Relaxed);
+    }
+}
+
+impl<S: AsyncRead + Unpin> AsyncRead for Touch<S> {
+    fn poll_read(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut ReadBuf<'_>) -> Poll<std::io::Result<()>> {
+        let this = self.get_mut();
+        let before = buf.filled().len();
+        let r = Pin::new(&mut this.inner).poll_read(cx, buf);
+        if matches!(r, Poll::Ready(Ok(()))) && buf.filled().len() > before {
+            this.touch();
+        }
+        r
+    }
+}
+
+impl<S: AsyncWrite + Unpin> AsyncWrite for Touch<S> {
+    fn poll_write(self: Pin<&mut Self>, cx: &mut Context<'_>, data: &[u8]) -> Poll<std::io::Result<usize>> {
+        let this = self.get_mut();
+        let r = Pin::new(&mut this.inner).poll_write(cx, data);
+        if matches!(r, Poll::Ready(Ok(n)) if n > 0) {
+            this.touch();
+        }
+        r
+    }
+
+    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<()>> {
+        Pin::new(&mut self.get_mut().inner).poll_flush(cx)
+    }
+
+    fn poll_shutdown(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<()>> {
+        Pin::new(&mut self.get_mut().inner).poll_shutdown(cx)
+    }
 }
 
 // SOCKS5 (RFC 1928) reply codes.
@@ -210,14 +341,14 @@ pub fn is_onion_host(host: &str) -> bool {
     }
 }
 
-async fn reply(sock: &mut TcpStream, code: u8) -> std::io::Result<()> {
+async fn reply<S: AsyncWrite + Unpin>(sock: &mut S, code: u8) -> std::io::Result<()> {
     sock.write_all(&[5, code, 0, 1, 0, 0, 0, 0, 0, 0]).await
 }
 
 /// Read the SOCKS5 greeting and request, answering refusals itself.
 /// `Some((host, port))` is an allowed `.onion` CONNECT still awaiting its
 /// reply; `None` means the exchange is over (refused or not SOCKS5).
-async fn handshake(sock: &mut TcpStream) -> std::io::Result<Option<(String, u16)>> {
+async fn handshake<S: AsyncRead + AsyncWrite + Unpin>(sock: &mut S) -> std::io::Result<Option<(String, u16)>> {
     // Greeting: VER NMETHODS METHODS…; we only speak "no authentication".
     let mut hdr = [0u8; 2];
     sock.read_exact(&mut hdr).await?;
@@ -281,11 +412,11 @@ async fn handshake(sock: &mut TcpStream) -> std::io::Result<Option<(String, u16)
 
 /// [`handshake`] bounded by `limit`: `None` (close the socket) when it was
 /// refused, wasn't SOCKS5, failed, or the peer was too slow.
-async fn read_target(sock: &mut TcpStream, limit: Duration) -> Option<(String, u16)> {
+async fn read_target<S: AsyncRead + AsyncWrite + Unpin>(sock: &mut S, limit: Duration) -> Option<(String, u16)> {
     tokio::time::timeout(limit, handshake(sock)).await.ok()?.ok()?
 }
 
-async fn serve(mut sock: TcpStream, client: Arc<TorClient<PreferredRuntime>>) -> std::io::Result<()> {
+async fn serve<S: AsyncRead + AsyncWrite + Unpin>(mut sock: S, client: Arc<TorClient<PreferredRuntime>>) -> std::io::Result<()> {
     let Some((host, port)) = read_target(&mut sock, HANDSHAKE_TIMEOUT).await else {
         return Ok(());
     };
@@ -465,6 +596,76 @@ mod tests {
         let mut buf = Vec::new();
         c.read_to_end(&mut buf).await.unwrap();
         assert_eq!(buf[..4], [5, 0, 5, REP_NOT_ALLOWED]);
+    }
+
+    /// Stand-in for `serve`: reads until the peer closes.
+    async fn drain(mut s: Touch<TcpStream>) {
+        let mut buf = [0u8; 64];
+        while matches!(s.read(&mut buf).await, Ok(n) if n > 0) {}
+    }
+
+    /// Accepts `n` connections into `conns`, returning the client ends.
+    async fn admit(conns: &Conns, l: &TcpListener, n: usize) -> Vec<TcpStream> {
+        let mut out = Vec::new();
+        for _ in 0..n {
+            let c = TcpStream::connect(l.local_addr().unwrap()).await.unwrap();
+            let (s, _) = l.accept().await.unwrap();
+            conns.spawn(s, drain);
+            out.push(c);
+        }
+        out
+    }
+
+    async fn closed(c: &mut TcpStream) -> bool {
+        let mut b = [0u8; 1];
+        matches!(tokio::time::timeout(Duration::from_secs(2), c.read(&mut b)).await, Ok(Ok(0)) | Ok(Err(_)))
+    }
+
+    async fn still_open(c: &mut TcpStream) -> bool {
+        let mut b = [0u8; 1];
+        tokio::time::timeout(Duration::from_millis(200), c.read(&mut b)).await.is_err()
+    }
+
+    #[tokio::test]
+    async fn full_listener_evicts_idlest_instead_of_refusing() {
+        let l = TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).await.unwrap();
+        let conns = Conns::new(3);
+        // Three squatters fill the listener, then two of them move bytes.
+        let mut squat = admit(&conns, &l, 3).await;
+        tokio::time::sleep(Duration::from_millis(30)).await;
+        squat[0].write_all(b"x").await.unwrap();
+        squat[2].write_all(b"x").await.unwrap();
+        tokio::time::sleep(Duration::from_millis(30)).await;
+        assert_eq!(conns.len(), 3);
+
+        // A fourth is admitted; the one that sat idle longest goes.
+        let mut fresh = admit(&conns, &l, 1).await.pop().unwrap();
+        assert!(closed(&mut squat[1]).await, "idlest connection evicted");
+        assert!(still_open(&mut squat[0]).await);
+        assert!(still_open(&mut squat[2]).await);
+        assert!(still_open(&mut fresh).await, "new connection served, not closed on accept");
+        assert_eq!(conns.len(), 3);
+
+        // A squatter re-opening to push the newcomer out only evicts the
+        // now-idlest of the rest, never the most recent.
+        tokio::time::sleep(Duration::from_millis(30)).await;
+        fresh.write_all(b"x").await.unwrap();
+        tokio::time::sleep(Duration::from_millis(30)).await;
+        let _again = admit(&conns, &l, 1).await;
+        assert!(closed(&mut squat[0]).await);
+        assert!(still_open(&mut fresh).await);
+
+        // Connections that end on their own free their slot.
+        drop(fresh);
+        drop(squat);
+        drop(_again);
+        for _ in 0..100 {
+            if conns.len() == 0 {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+        assert_eq!(conns.len(), 0);
     }
 
     #[test]
