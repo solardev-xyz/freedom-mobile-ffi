@@ -37,8 +37,15 @@ chain = ["ant-ffi/chain"]
 radicle = ["dep:libradicle-uniffi"]
 
 [dependencies]
-ant-ffi = { git = "ssh://git@github.com/freedom-hq/ant.git", tag = "v0.5.46" }
-freedom-ipfs-mobile = { git = "ssh://git@github.com/solardev-xyz/freedom-ipfs.git", tag = "v0.4.3" }
+# UNRELEASED: both pinned by rev to the branches that export their tracing
+# layers (ant `log_layer`, freedom-ipfs `progress_layer`) for
+# `freedom_mobile_init_logging`. Swap for their release tags once those
+# branches are merged and tagged.
+ant-ffi = { git = "ssh://git@github.com/freedom-hq/ant.git", rev = "f92d8069c9d1e99158793bf1cd28119b891f0f52" }
+freedom-ipfs-mobile = { git = "ssh://git@github.com/solardev-xyz/freedom-ipfs.git", rev = "1bc9ab924de3bbdc05f8cb1ae042d297976a7b44" }
+# The one process-wide subscriber carrying both nodes' layers
+# (`freedom_mobile_init_logging`). Same 0.3 the nodes already link.
+tracing-subscriber = { version = "0.3", default-features = false, features = ["registry", "std", "tracing-log"] }
 # SPIKE (Phase 0): Myotis — fully-P2P verified Ethereum light client
 # (myotis_* C ABI, JSON-over-C-strings like ant_*). v0.1.12 = engine ABI 32 (#465 fixes: peer-head admission/ranking,
 # finalized-anchored windows, snapServingPeers, host seed pins; v0.1.11 hedged reads). Public repo, https is fine.

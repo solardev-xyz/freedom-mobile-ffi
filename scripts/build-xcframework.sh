@@ -80,6 +80,7 @@ mkdir -p "$HDRS"
 cp "$ANT_HEADER" "$HDRS/ant.h"
 cp "$IPFS_HEADER" "$HDRS/freedom_ipfs.h"
 cp "$MYOTIS_HEADER" "$HDRS/myotis_engine.h"
+cp "$ROOT/include/freedom_mobile.h" "$HDRS/freedom_mobile.h"
 cp "$UNIFFI_OUT/libradicle_uniffiFFI.h" "$HDRS/libradicle_uniffiFFI.h"
 # One modulemap file, two modules: the hand-written FreedomMobile union
 # (C ABIs) plus the generated libradicle_uniffiFFI module the generated

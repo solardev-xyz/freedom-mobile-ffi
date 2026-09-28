@@ -64,6 +64,7 @@ rm -rf "$OUT"
 mkdir -p "$HDRS"
 cp "$ANT_HEADER" "$HDRS/ant.h"
 cp "$IPFS_HEADER" "$HDRS/freedom_ipfs.h"
+cp "$ROOT/include/freedom_mobile.h" "$HDRS/freedom_mobile.h"
 for t in "${!ABI[@]}"; do
   mkdir -p "$OUT/jniLibs/${ABI[$t]}"
   cp "$ROOT/target/$t/$PROFILE/$LIBNAME" "$OUT/jniLibs/${ABI[$t]}/$LIBNAME"
@@ -101,7 +102,7 @@ fail_with_diagnostics() {
 for t in "${!ABI[@]}"; do
   so="$OUT/jniLibs/${ABI[$t]}/$LIBNAME"
   dynsyms="$("$NM" -D "$so")"
-  for sym in ant_init ant_start_gateway freedom_ipfs_node_new_with_data_dir freedom_ipfs_node_start_gateway_online; do
+  for sym in ant_init ant_start_gateway freedom_ipfs_node_new_with_data_dir freedom_ipfs_node_start_gateway_online freedom_mobile_init_logging; do
     grep -q " T $sym" <<<"$dynsyms" || fail_with_diagnostics "$so" "missing export $sym"
   done
   dyn="$("$READELF" -d "$so")"

@@ -10,7 +10,9 @@
 //!
 //! Nothing else lives here on purpose: the value of this crate is the
 //! single compilation graph (one std / allocator / libp2p / tokio), not
-//! any new behaviour.
+//! any new behaviour — with one exception, [`freedom_mobile_init_logging`]:
+//! the `tracing` subscriber is process-wide, and both nodes want a layer
+//! on it, so only the crate that links them both can install it.
 
 pub use ant_ffi::*;
 pub use freedom_ipfs_mobile::*;
@@ -26,3 +28,34 @@ pub use myotis_engine::capi::*;
 // Feature-gated so the Android slice (--no-default-features) skips it.
 #[cfg(feature = "radicle")]
 pub use libradicle_uniffi::*;
+
+/// Install the process's one `tracing` subscriber, carrying both nodes'
+/// layers: ant's log output (logcat tag `ant-ffi` on Android, stderr
+/// elsewhere, filtered by `ANT_LOG` / `RUST_LOG`) and freedom-ipfs's
+/// retrieval-progress recorder (what `freedom_ipfs_node_progress_snapshot_json`
+/// reports).
+///
+/// Each node installs its own layer as the global subscriber when it
+/// starts, and the first claim wins: with ant started first, freedom-ipfs's
+/// recorder never lands and its progress snapshot stays empty for the life
+/// of the process. Call this before `ant_init*` and
+/// `freedom_ipfs_node_new*`; both then find the slot taken and leave it.
+///
+/// Idempotent and thread-safe. Returns true when the subscriber is this
+/// one — installed now or by an earlier call — and false when something
+/// else had already claimed the slot (a node started first, or the host's
+/// own subscriber), in which case nothing changed.
+#[no_mangle]
+pub extern "C" fn freedom_mobile_init_logging() -> bool {
+    use std::sync::OnceLock;
+    use tracing_subscriber::layer::SubscriberExt;
+    use tracing_subscriber::util::SubscriberInitExt;
+    static INSTALLED: OnceLock<bool> = OnceLock::new();
+    *INSTALLED.get_or_init(|| {
+        tracing_subscriber::registry()
+            .with(ant_ffi::log_layer())
+            .with(freedom_ipfs_mobile::progress_layer())
+            .try_init()
+            .is_ok()
+    })
+}

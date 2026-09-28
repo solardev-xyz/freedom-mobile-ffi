@@ -336,7 +336,7 @@ dependencies = [
 [[package]]
 name = "ant-chain"
 version = "0.5.46"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.46#43d3e632a51d6e9ff8271ea39ec2862c1526871f"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?rev=f92d8069c9d1e99158793bf1cd28119b891f0f52#f92d8069c9d1e99158793bf1cd28119b891f0f52"
 dependencies = [
  "ant-crypto",
  "getrandom 0.3.4",
@@ -356,7 +356,7 @@ dependencies = [
 [[package]]
 name = "ant-control"
 version = "0.5.46"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.46#43d3e632a51d6e9ff8271ea39ec2862c1526871f"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?rev=f92d8069c9d1e99158793bf1cd28119b891f0f52#f92d8069c9d1e99158793bf1cd28119b891f0f52"
 dependencies = [
  "hex",
  "serde",
@@ -369,7 +369,7 @@ dependencies = [
 [[package]]
 name = "ant-crypto"
 version = "0.5.46"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.46#43d3e632a51d6e9ff8271ea39ec2862c1526871f"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?rev=f92d8069c9d1e99158793bf1cd28119b891f0f52#f92d8069c9d1e99158793bf1cd28119b891f0f52"
 dependencies = [
  "getrandom 0.3.4",
  "k256",
@@ -380,7 +380,7 @@ dependencies = [
 [[package]]
 name = "ant-ffi"
 version = "0.5.46"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.46#43d3e632a51d6e9ff8271ea39ec2862c1526871f"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?rev=f92d8069c9d1e99158793bf1cd28119b891f0f52#f92d8069c9d1e99158793bf1cd28119b891f0f52"
 dependencies = [
  "ant-chain",
  "ant-control",
@@ -406,7 +406,7 @@ dependencies = [
 [[package]]
 name = "ant-gateway"
 version = "0.5.46"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.46#43d3e632a51d6e9ff8271ea39ec2862c1526871f"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?rev=f92d8069c9d1e99158793bf1cd28119b891f0f52#f92d8069c9d1e99158793bf1cd28119b891f0f52"
 dependencies = [
  "ant-chain",
  "ant-control",
@@ -434,7 +434,7 @@ dependencies = [
 [[package]]
 name = "ant-node"
 version = "0.5.46"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.46#43d3e632a51d6e9ff8271ea39ec2862c1526871f"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?rev=f92d8069c9d1e99158793bf1cd28119b891f0f52#f92d8069c9d1e99158793bf1cd28119b891f0f52"
 dependencies = [
  "ant-control",
  "ant-crypto",
@@ -455,7 +455,7 @@ dependencies = [
 [[package]]
 name = "ant-p2p"
 version = "0.5.46"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.46#43d3e632a51d6e9ff8271ea39ec2862c1526871f"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?rev=f92d8069c9d1e99158793bf1cd28119b891f0f52#f92d8069c9d1e99158793bf1cd28119b891f0f52"
 dependencies = [
  "ant-chain",
  "ant-control",
@@ -485,7 +485,7 @@ dependencies = [
 [[package]]
 name = "ant-postage"
 version = "0.5.46"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.46#43d3e632a51d6e9ff8271ea39ec2862c1526871f"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?rev=f92d8069c9d1e99158793bf1cd28119b891f0f52#f92d8069c9d1e99158793bf1cd28119b891f0f52"
 dependencies = [
  "ant-crypto",
  "hex",
@@ -497,7 +497,7 @@ dependencies = [
 [[package]]
 name = "ant-retrieval"
 version = "0.5.46"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.46#43d3e632a51d6e9ff8271ea39ec2862c1526871f"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?rev=f92d8069c9d1e99158793bf1cd28119b891f0f52#f92d8069c9d1e99158793bf1cd28119b891f0f52"
 dependencies = [
  "ant-crypto",
  "ant-postage",
@@ -2627,7 +2627,7 @@ dependencies = [
 [[package]]
 name = "freedom-ipfs-core"
 version = "0.4.3"
-source = "git+ssh://git@github.com/solardev-xyz/freedom-ipfs.git?tag=v0.4.3#f6a5431cac9754f4bd3652ecce07a908cb2ef03e"
+source = "git+ssh://git@github.com/solardev-xyz/freedom-ipfs.git?rev=1bc9ab924de3bbdc05f8cb1ae042d297976a7b44#1bc9ab924de3bbdc05f8cb1ae042d297976a7b44"
 dependencies = [
  "cid",
  "multihash",
@@ -2639,7 +2639,7 @@ dependencies = [
 [[package]]
 name = "freedom-ipfs-gateway"
 version = "0.4.3"
-source = "git+ssh://git@github.com/solardev-xyz/freedom-ipfs.git?tag=v0.4.3#f6a5431cac9754f4bd3652ecce07a908cb2ef03e"
+source = "git+ssh://git@github.com/solardev-xyz/freedom-ipfs.git?rev=1bc9ab924de3bbdc05f8cb1ae042d297976a7b44#1bc9ab924de3bbdc05f8cb1ae042d297976a7b44"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2664,7 +2664,7 @@ dependencies = [
 [[package]]
 name = "freedom-ipfs-mobile"
 version = "0.4.3"
-source = "git+ssh://git@github.com/solardev-xyz/freedom-ipfs.git?tag=v0.4.3#f6a5431cac9754f4bd3652ecce07a908cb2ef03e"
+source = "git+ssh://git@github.com/solardev-xyz/freedom-ipfs.git?rev=1bc9ab924de3bbdc05f8cb1ae042d297976a7b44#1bc9ab924de3bbdc05f8cb1ae042d297976a7b44"
 dependencies = [
  "axum",
  "freedom-ipfs-core",
@@ -2685,7 +2685,7 @@ dependencies = [
 [[package]]
 name = "freedom-ipfs-namesys"
 version = "0.4.3"
-source = "git+ssh://git@github.com/solardev-xyz/freedom-ipfs.git?tag=v0.4.3#f6a5431cac9754f4bd3652ecce07a908cb2ef03e"
+source = "git+ssh://git@github.com/solardev-xyz/freedom-ipfs.git?rev=1bc9ab924de3bbdc05f8cb1ae042d297976a7b44#1bc9ab924de3bbdc05f8cb1ae042d297976a7b44"
 dependencies = [
  "async-trait",
  "cid",
@@ -2705,7 +2705,7 @@ dependencies = [
 [[package]]
 name = "freedom-ipfs-retrieval"
 version = "0.4.3"
-source = "git+ssh://git@github.com/solardev-xyz/freedom-ipfs.git?tag=v0.4.3#f6a5431cac9754f4bd3652ecce07a908cb2ef03e"
+source = "git+ssh://git@github.com/solardev-xyz/freedom-ipfs.git?rev=1bc9ab924de3bbdc05f8cb1ae042d297976a7b44#1bc9ab924de3bbdc05f8cb1ae042d297976a7b44"
 dependencies = [
  "cid",
  "freedom-ipfs-core",
@@ -2729,7 +2729,7 @@ dependencies = [
 [[package]]
 name = "freedom-ipfs-routing"
 version = "0.4.3"
-source = "git+ssh://git@github.com/solardev-xyz/freedom-ipfs.git?tag=v0.4.3#f6a5431cac9754f4bd3652ecce07a908cb2ef03e"
+source = "git+ssh://git@github.com/solardev-xyz/freedom-ipfs.git?rev=1bc9ab924de3bbdc05f8cb1ae042d297976a7b44#1bc9ab924de3bbdc05f8cb1ae042d297976a7b44"
 dependencies = [
  "async-trait",
  "cid",
@@ -2748,7 +2748,7 @@ dependencies = [
 [[package]]
 name = "freedom-ipfs-store"
 version = "0.4.3"
-source = "git+ssh://git@github.com/solardev-xyz/freedom-ipfs.git?tag=v0.4.3#f6a5431cac9754f4bd3652ecce07a908cb2ef03e"
+source = "git+ssh://git@github.com/solardev-xyz/freedom-ipfs.git?rev=1bc9ab924de3bbdc05f8cb1ae042d297976a7b44#1bc9ab924de3bbdc05f8cb1ae042d297976a7b44"
 dependencies = [
  "cid",
  "freedom-ipfs-core",
@@ -2762,7 +2762,7 @@ dependencies = [
 [[package]]
 name = "freedom-ipfs-unixfs"
 version = "0.4.3"
-source = "git+ssh://git@github.com/solardev-xyz/freedom-ipfs.git?tag=v0.4.3#f6a5431cac9754f4bd3652ecce07a908cb2ef03e"
+source = "git+ssh://git@github.com/solardev-xyz/freedom-ipfs.git?rev=1bc9ab924de3bbdc05f8cb1ae042d297976a7b44#1bc9ab924de3bbdc05f8cb1ae042d297976a7b44"
 dependencies = [
  "cid",
  "freedom-ipfs-core",
@@ -2780,6 +2780,7 @@ dependencies = [
  "libradicle-uniffi",
  "myotis-engine",
  "serde_json",
+ "tracing-subscriber 0.3.23",
 ]
 
 [[package]]
