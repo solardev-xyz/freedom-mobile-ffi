@@ -28,6 +28,13 @@ pub use myotis_engine::capi::*;
 // Feature-gated so the Android slice (--no-default-features) skips it.
 #[cfg(feature = "radicle")]
 pub use libradicle_uniffi::*;
+// Fifth member: Tor (Arti), `freedom_tor_*` (include/freedom_tor.h). Arti
+// has no C surface of its own, so this crate carries a small one: a
+// loopback SOCKS5 listener that only connects to `.onion` hosts. Opt-in.
+#[cfg(feature = "tor")]
+pub mod tor;
+#[cfg(feature = "tor")]
+pub use tor::*;
 
 /// Install the process's one `tracing` subscriber, carrying both nodes'
 /// layers: ant's log output (logcat tag `ant-ffi` on Android, stderr
