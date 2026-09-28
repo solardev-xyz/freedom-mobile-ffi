@@ -80,6 +80,7 @@ mkdir -p "$HDRS"
 cp "$ANT_HEADER" "$HDRS/ant.h"
 cp "$IPFS_HEADER" "$HDRS/freedom_ipfs.h"
 cp "$MYOTIS_HEADER" "$HDRS/myotis_engine.h"
+cp "$ROOT/include/freedom_mobile.h" "$HDRS/freedom_mobile.h"
 cp "$UNIFFI_OUT/libradicle_uniffiFFI.h" "$HDRS/libradicle_uniffiFFI.h"
 # One modulemap file, two modules: the hand-written FreedomMobile union
 # (C ABIs) plus the generated libradicle_uniffiFFI module the generated
@@ -87,6 +88,19 @@ cp "$UNIFFI_OUT/libradicle_uniffiFFI.h" "$HDRS/libradicle_uniffiFFI.h"
 # stays the single hand-maintained source.
 cat "$ROOT/include/module.modulemap" "$UNIFFI_OUT/libradicle_uniffiFFI.modulemap" \
   > "$HDRS/module.modulemap"
+
+# xcodebuild copies headers verbatim and never parses the modulemap, so a
+# missing header or a typo would otherwise first surface in the app build.
+# Compile both modules exactly as Swift will import them (-Werror: an
+# incomplete-umbrella or redefinition warning is a broken module too).
+echo "==> Verifying the staged modules compile"
+SMOKE="$OUT/module-smoke"
+mkdir -p "$SMOKE"
+printf '@import FreedomMobile;\n@import libradicle_uniffiFFI;\n' > "$SMOKE/smoke.m"
+xcrun --sdk iphoneos clang -target arm64-apple-ios18.0 \
+  -fmodules -fmodules-cache-path="$SMOKE/cache" -Werror \
+  -I "$HDRS" -fsyntax-only "$SMOKE/smoke.m"
+rm -rf "$SMOKE"
 
 echo "==> lipo fat simulator slice"
 mkdir -p "$OUT/sim"

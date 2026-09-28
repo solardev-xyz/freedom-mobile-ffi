@@ -1,7 +1,8 @@
 // One Clang module exposing BOTH C ABIs from the combined staticlib:
 // Swarm (ant-ffi, `ant_*`) and IPFS (freedom-ipfs-mobile,
 // `freedom_ipfs_*`). The app imports `FreedomMobile` and gets both
-// symbol families. Linked system frameworks are the union of what each
+// symbol families, plus the aggregator's own `freedom_mobile_*`
+// (freedom_mobile.h). Linked system frameworks are the union of what each
 // library needs: ant's libp2p/TLS stack pulls Security +
 // SystemConfiguration + CoreFoundation; freedom-ipfs pulls
 // SystemConfiguration.
@@ -9,6 +10,7 @@ module FreedomMobile {
     header "ant.h"
     header "freedom_ipfs.h"
     header "myotis_engine.h"
+    header "freedom_mobile.h"
     link framework "Security"
     link framework "SystemConfiguration"
     link framework "CoreFoundation"
