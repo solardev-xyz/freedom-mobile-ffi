@@ -347,8 +347,8 @@ dependencies = [
 
 [[package]]
 name = "ant-chain"
-version = "0.5.49"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.49#c77a4d9884b2cc2c2b3f8b2324e65108fcd2c6c0"
+version = "0.5.51"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.51#4e0e62dfbcd1d858604759ea7dcadca7d00aec41"
 dependencies = [
  "ant-crypto",
  "getrandom 0.3.4",
@@ -367,8 +367,8 @@ dependencies = [
 
 [[package]]
 name = "ant-control"
-version = "0.5.49"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.49#c77a4d9884b2cc2c2b3f8b2324e65108fcd2c6c0"
+version = "0.5.51"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.51#4e0e62dfbcd1d858604759ea7dcadca7d00aec41"
 dependencies = [
  "hex",
  "serde",
@@ -380,8 +380,8 @@ dependencies = [
 
 [[package]]
 name = "ant-crypto"
-version = "0.5.49"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.49#c77a4d9884b2cc2c2b3f8b2324e65108fcd2c6c0"
+version = "0.5.51"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.51#4e0e62dfbcd1d858604759ea7dcadca7d00aec41"
 dependencies = [
  "getrandom 0.3.4",
  "k256",
@@ -391,8 +391,8 @@ dependencies = [
 
 [[package]]
 name = "ant-ffi"
-version = "0.5.49"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.49#c77a4d9884b2cc2c2b3f8b2324e65108fcd2c6c0"
+version = "0.5.51"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.51#4e0e62dfbcd1d858604759ea7dcadca7d00aec41"
 dependencies = [
  "ant-chain",
  "ant-control",
@@ -417,8 +417,8 @@ dependencies = [
 
 [[package]]
 name = "ant-gateway"
-version = "0.5.49"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.49#c77a4d9884b2cc2c2b3f8b2324e65108fcd2c6c0"
+version = "0.5.51"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.51#4e0e62dfbcd1d858604759ea7dcadca7d00aec41"
 dependencies = [
  "ant-chain",
  "ant-control",
@@ -445,8 +445,8 @@ dependencies = [
 
 [[package]]
 name = "ant-node"
-version = "0.5.49"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.49#c77a4d9884b2cc2c2b3f8b2324e65108fcd2c6c0"
+version = "0.5.51"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.51#4e0e62dfbcd1d858604759ea7dcadca7d00aec41"
 dependencies = [
  "ant-control",
  "ant-crypto",
@@ -466,8 +466,8 @@ dependencies = [
 
 [[package]]
 name = "ant-p2p"
-version = "0.5.49"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.49#c77a4d9884b2cc2c2b3f8b2324e65108fcd2c6c0"
+version = "0.5.51"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.51#4e0e62dfbcd1d858604759ea7dcadca7d00aec41"
 dependencies = [
  "ant-chain",
  "ant-control",
@@ -496,8 +496,8 @@ dependencies = [
 
 [[package]]
 name = "ant-postage"
-version = "0.5.49"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.49#c77a4d9884b2cc2c2b3f8b2324e65108fcd2c6c0"
+version = "0.5.51"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.51#4e0e62dfbcd1d858604759ea7dcadca7d00aec41"
 dependencies = [
  "ant-crypto",
  "fs4",
@@ -509,8 +509,8 @@ dependencies = [
 
 [[package]]
 name = "ant-retrieval"
-version = "0.5.49"
-source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.49#c77a4d9884b2cc2c2b3f8b2324e65108fcd2c6c0"
+version = "0.5.51"
+source = "git+ssh://git@github.com/freedom-hq/ant.git?tag=v0.5.51#4e0e62dfbcd1d858604759ea7dcadca7d00aec41"
 dependencies = [
  "ant-crypto",
  "ant-postage",
