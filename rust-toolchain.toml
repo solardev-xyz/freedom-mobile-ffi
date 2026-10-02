@@ -3,9 +3,10 @@
 # stable. Pin a concrete floor here so the combined build is
 # reproducible regardless of whatever the host's `stable` happens to be
 # (some machines still resolve `stable` to an older release). Bump to
-# match the published toolchain when the node repos do.
+# match the published toolchain when the node repos do — ant v0.5.52
+# uses `AtomicUsize::try_update` (stable since 1.98), so 1.99 here.
 [toolchain]
-channel = "1.94"
+channel = "1.99"
 targets = [
     "aarch64-apple-ios",
     "aarch64-apple-ios-sim",
