@@ -46,8 +46,8 @@ tor = ["dep:arti-client", "dep:tor-rtcompat", "dep:tokio"]
 # layers (ant `log_layer`, freedom-ipfs `progress_layer`) for
 # `freedom_mobile_init_logging`. Swap for their release tags once those
 # branches are merged and tagged.
-ant-ffi = { git = "ssh://git@github.com/freedom-hq/ant.git", tag = "v0.5.68" }
-freedom-ipfs-mobile = { git = "ssh://git@github.com/solardev-xyz/freedom-ipfs.git", tag = "v0.4.4" }
+ant-ffi = { git = "ssh://git@github.com/freedom-hq/ant.git", tag = "v0.5.69" }
+freedom-ipfs-mobile = { git = "ssh://git@github.com/solardev-xyz/freedom-ipfs.git", tag = "v0.4.5" }
 # The one process-wide subscriber carrying both nodes' layers
 # (`freedom_mobile_init_logging`). Same 0.3 the nodes already link.
 # `tracing` installs it and `tracing-log` bridges `log` records into it —
@@ -57,9 +57,9 @@ tracing-subscriber = { version = "0.3", default-features = false, features = ["r
 tracing = { version = "0.1", default-features = false, features = ["std"] }
 tracing-log = { version = "0.2", default-features = false, features = ["log-tracer", "std"] }
 # SPIKE (Phase 0): Myotis — fully-P2P verified Ethereum light client
-# (myotis_* C ABI, JSON-over-C-strings like ant_*). v0.1.12 = engine ABI 32 (#465 fixes: peer-head admission/ranking,
-# finalized-anchored windows, snapServingPeers, host seed pins; v0.1.11 hedged reads). Public repo, https is fine.
-myotis-engine = { git = "https://github.com/biafra23/myotis.git", tag = "v0.1.12" }
+# (myotis_* C ABI, JSON-over-C-strings like ant_*). v0.1.15 = engine ABI 45 (EL discovery and
+# peer-pool work, v0.1.14 trust checkpoints). Public repo, https is fine.
+myotis-engine = { git = "https://github.com/biafra23/myotis.git", tag = "v0.1.15" }
 # Fourth member: Radicle (UniFFI `uniffi_libradicle_uniffi_*` scaffolding
 # symbols, JSON-string returns mirroring the desktop napi addon). `no-spawn`
 # is what lets the phone publish: the embedded node serves fetches in-process
